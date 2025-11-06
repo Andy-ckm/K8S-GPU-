@@ -908,7 +908,7 @@ CMD ["bash","-lc","python train.py"]
 
 ---
 
-老大，这份操作方案把你给的所有零散信息（GoHai CLI 行为、context、repo init、trainjob template、dev env、micromamba、ssh/vscode、nohup、SFTP/lftp、模型导出、Volcano/HAMi/K8s/MinIO/Harbor/Keycloak/CI）全部串在一条可执行链路里：**你按步骤跑下去就能搭出一个能生产演示 Fashion-MNIST 的私有化 GoHai 平台 DEMO**。
+这份操作方案把你给的所有零散信息（GoHai CLI 行为、context、repo init、trainjob template、dev env、micromamba、ssh/vscode、nohup、SFTP/lftp、模型导出、Volcano/HAMi/K8s/MinIO/Harbor/Keycloak/CI）全部串在一条可执行链路里：**你按步骤跑下去就能搭出一个能生产演示 Fashion-MNIST 的私有化 GoHai 平台 DEMO**。
 
 如果你现在需要，我可以立刻（在本次回复里）：
 
@@ -916,7 +916,6 @@ CMD ["bash","-lc","python train.py"]
 * 把 `GoHai-controller` / `devenv-controller` 的 **示例实现伪代码**（Go/Cobra + client-go）写出来，或
 * 直接把 **完整 Fashion-MNIST repo（含 train.py、train_job_template.yaml、.gitlab-ci.yml）** 的文件树与内容生成，方便你 `git init` 即用。
 
-你说要哪个，我现在就把它生成出来（我不会问你问题，直接输出你选的那一份）。
 
 =============================================================================================================
 
