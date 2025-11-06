@@ -4,9 +4,9 @@
 ============================================================================================================
 
 # 目录清单
-# 一键复现版 — 完整可执行的 YAI 类私有化 AI 平台操作方案（Kubernetes 版，含 DevEnv、训练流、存储、认证、CI/CD、示例任务）
+# 一键复现版 — 完整可执行的 GoHai 类私有化 AI 平台操作方案（Kubernetes 版，含 DevEnv、训练流、存储、认证、CI/CD、示例任务）
 
-下面的内容是工程级的、按步骤可跑通的一整套手册：从集群、存储、认证、镜像仓库，到 DevEnv、yai-CLI 行为、训练任务模板、Volcano 调度、多机/多卡训练、资产导出、VSCode/SSH 接入、SFTP/上传策略、CI/CD 都覆盖到位。
+下面的内容是工程级的、按步骤可跑通的一整套手册：从集群、存储、认证、镜像仓库，到 DevEnv、GoHai-CLI 行为、训练任务模板、Volcano 调度、多机/多卡训练、资产导出、VSCode/SSH 接入、SFTP/上传策略、CI/CD 都覆盖到位。
 （替换占位符）
 
 > 注意：文档中以 `example.*`、`*.local`、`YOUR_*` 为占位符，请替换为公司域名/凭据/路径。
@@ -22,13 +22,13 @@
 5. 身份认证（Keycloak + AD/LDAP）与多租户策略
 6. 调度器与训练运行时（Volcano + HAMi + Kubeflow Training Operator）
 7. DevEnv 子系统（Pod-based 开发环境、micromamba、SSH/VSCode 接入）
-8. yai-CLI 行为与本地 config（context、token、space）示例
+8. GoHai-CLI 行为与本地 config（context、token、space）示例
 9. 训练任务模板与提交流程（单机/分布式、dry-run、--bare）
 10. 示例：Fashion-MNIST 完整训练（train.py + Job YAML + 导出模型）
 11. 资产上传方式（Web、SFTP、lftp、外部导入）与最佳实践
 12. CI/CD（GitLab CI 示例 + Helm/ArgoCD）
 13. 维护、监控与运维要点（日志、清理、配额告警）
-14. 附录：关键文件（Dockerfile、Helm 模板片段、.mambarc、yai train_job_template.yaml）
+14. 附录：关键文件（Dockerfile、Helm 模板片段、.mambarc、GoHai train_job_template.yaml）
 
 ---
 
@@ -54,7 +54,7 @@
 * 3 x Worker nodes（包含至少 1 台 GPU 节点，NVIDIA GPU）
 * 每台机器 Ubuntu 22.04，内存 >= 32GB（GPU 节点更多）
 * 网络互通、DNS 可解析（ingress 域名指向 LB）
-* 对外域名：`yai.example.com`、`harbor.example.com`、`minio.example.com`、`git.example.com`、`keycloak.example.com`
+* 对外域名：`GoHai.example.com`、`harbor.example.com`、`minio.example.com`、`git.example.com`、`keycloak.example.com`
 * Kubernetes v1.26+（示例以 kubeadm / helm 为主）
 * Helm 3、kubectl、docker/containerd
 
@@ -264,9 +264,9 @@ proxy: true
 Keycloak 管理台 → Realm → Identity providers → Add provider: LDAP / Active Directory
 配置 bind DN、bind credential、user search base 等，通过用户名/密码校验用户。
 
-## 5.3 配置 OIDC 客户端（供 YAI Web & CLI）
+## 5.3 配置 OIDC 客户端（供 GoHai Web & CLI）
 
-在 Keycloak 创建 Client（`yai-portal` / `yai-cli`），启用 `Authorization Code` 流程，设置 `redirectUris` 指向你的前端回调 URL。
+在 Keycloak 创建 Client（`GoHai-portal` / `GoHai-cli`），启用 `Authorization Code` 流程，设置 `redirectUris` 指向你的前端回调 URL。
 
 ---
 
@@ -334,8 +334,8 @@ CMD ["/usr/sbin/sshd","-D"]
 构建&推送：
 
 ```bash
-docker build -t harbor.example.com/yai/mamba-base:v1 .
-docker push harbor.example.com/yai/mamba-base:v1
+docker build -t harbor.example.com/GoHai/mamba-base:v1 .
+docker push harbor.example.com/GoHai/mamba-base:v1
 ```
 
 ## 7.2 Pod 模板（devenv）
@@ -348,11 +348,11 @@ kind: Pod
 metadata:
   name: devenv-<username>
   labels:
-    app: yai-devenv
+    app: GoHai-devenv
 spec:
   containers:
   - name: workspace
-    image: harbor.example.com/yai/mamba-base:v1
+    image: harbor.example.com/GoHai/mamba-base:v1
     ports:
       - containerPort: 22
     volumeMounts:
@@ -414,8 +414,8 @@ ssh-keygen -t rsa -f ~/.ssh/id_rsa -C "your@company"
 cat ~/.ssh/id_rsa.pub
 ```
 
-2. 在 YAI UI（用户配置页）上传公钥（平台存为 Secret，controller 注入 Pod）。
-3. 获取 Pod 的 SSH 连接信息（平台 UI 显示 `ssh user@env-xxx.ssh-yai.example.com -p 2022`），或直接使用 port-forward。
+2. 在 GoHai UI（用户配置页）上传公钥（平台存为 Secret，controller 注入 Pod）。
+3. 获取 Pod 的 SSH 连接信息（平台 UI 显示 `ssh user@env-xxx.ssh-GoHai.example.com -p 2022`），或直接使用 port-forward。
 4. VSCode: 安装 Remote-SSH，添加 Host 到 `~/.ssh/config`，连接时会自动部署 VSCode Server（第一次稍慢）。
 
 ## 7.5 后台运行 & 长任务（开发时常犯的坑）
@@ -444,11 +444,11 @@ kill -9 <PID>
 
 ---
 
-# 8. yai-CLI 行为与本地配置（context、token、space）示例
+# 8. GoHai-CLI 行为与本地配置（context、token、space）示例
 
 我把你提供过的行为规范串成可操作的样板文件/命令。
 
-## 8.1 安装 yai CLI（示例）
+## 8.1 安装 GoHai CLI（示例）
 
 安装脚本（你之前有）：
 
@@ -458,13 +458,13 @@ curl https://nexus.example.com/repository/.../install-cli.sh | sh
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
-## 8.2 ~/.config/yai-cli/config.yaml（示例 — 请脱敏后保存）
+## 8.2 ~/.config/GoHai-cli/config.yaml（示例 — 请脱敏后保存）
 
 ```yaml
 current-context: default
 contexts:
   default:
-    host: https://yai.example.com
+    host: https://GoHai.example.com
     token: <REDACTED_TOKEN>
     space: space-abc123
     user: user@company.com
@@ -474,11 +474,11 @@ profiles: {}
 命令：
 
 ```bash
-yai login           # 浏览器跳转 OIDC，选择 Space（platform will create default context）
-yai context list
-yai context new my-other-space
-yai context use my-other-space   # 切换上下文
-yai whoami
+GoHai login           # 浏览器跳转 OIDC，选择 Space（platform will create default context）
+GoHai context list
+GoHai context new my-other-space
+GoHai context use my-other-space   # 切换上下文
+GoHai whoami
 ```
 
 ## 8.3 repo init / repo push / trainjob template flow
@@ -486,23 +486,23 @@ yai whoami
 在本地（或 DevEnv）：
 
 ```bash
-# 从平台关联的 repo clone，或 yai repo init 拉取
-git clone https://git.example.com/yourproj/yai-example.git
-cd yai-example
-yai repo init   # 生成 yai.repo.yaml
+# 从平台关联的 repo clone，或 GoHai repo init 拉取
+git clone https://git.example.com/yourproj/GoHai-example.git
+cd GoHai-example
+GoHai repo init   # 生成 GoHai.repo.yaml
 # 改代码...
 git add . && git commit -m "train debug"
 git push origin main
-# 或使用 yai repo push（会 push 到平台关联仓库）
-yai repo push
+# 或使用 GoHai repo push（会 push 到平台关联仓库）
+GoHai repo push
 ```
 
 生成训练任务模板：
 
 ```bash
-yai trainjob template  # 生成 train_job_template.yaml
+GoHai trainjob template  # 生成 train_job_template.yaml
 # 或从已有 job 导出为模板
-yai trainjob template -s <job-id>
+GoHai trainjob template -s <job-id>
 ```
 
 ---
@@ -517,7 +517,7 @@ description: "Fashion-MNIST CNN training via CLI template"
 image: harbor.example.com/ai/pytorch:1.13-cuda11
 command: python train.py --epochs 5 --batch_size 128
 env:
-  YAI_CLI: "true"
+  GoHai_CLI: "true"
 repository:
   - repository:
       space: space-abc123
@@ -537,17 +537,17 @@ spec:
 ## 9.2 dry-run & create
 
 ```bash
-yai trainjob create -f train_job_template.yaml --dry-run
+GoHai trainjob create -f train_job_template.yaml --dry-run
 # 检查输出的 Job YAML（由平台生成）
-yai trainjob create -f train_job_template.yaml
-yai trainjob list
-yai trainjob logs <job-id>
+GoHai trainjob create -f train_job_template.yaml
+GoHai trainjob list
+GoHai trainjob logs <job-id>
 ```
 
 ## 9.3 完全按 YAML（--bare）
 
 ```bash
-yai trainjob create -f job_full.yaml --bare
+GoHai trainjob create -f job_full.yaml --bare
 ```
 
 ---
@@ -659,7 +659,7 @@ spec:
               command: ["bash","-lc"]
               args:
                 - |
-                  git clone https://git.example.com/server/devops/sandbox/yai-example.git /repo || true
+                  git clone https://git.example.com/server/devops/sandbox/GoHai-example.git /repo || true
                   cd /repo
                   python train.py --epochs 5 --batch_size 128 --data_dir /dataset
               resources:
@@ -706,10 +706,10 @@ mc cp /path/to/fashion_mnist_cnn.pth myminio/models/fashion-mnist/v1/
 
 ## 11.2 SFTP（推荐普通用户上传大文件）
 
-服务端（平台）提供 SFTP endpoint `sftp-yai.example.com:2022`，示例：
+服务端（平台）提供 SFTP endpoint `sftp-GoHai.example.com:2022`，示例：
 
 ```bash
-sftp -P 2022 user@sftp-yai.example.com
+sftp -P 2022 user@sftp-GoHai.example.com
 put -r /local/dataset/ /remote/data/dataset-0/
 ```
 
@@ -728,7 +728,7 @@ sudo apt-get install -y lftp
 ```bash
 lftp -c "
 set sftp:connect-program 'ssh -a -x -p 2022'
-open sftp://user@sftp-yai.example.com
+open sftp://user@sftp-GoHai.example.com
 mirror -R --ignore-time --only-newer /local/dir/ /remote/dir/
 "
 ```
@@ -738,7 +738,7 @@ mirror -R --ignore-time --only-newer /local/dir/ /remote/dir/
 API 调用（平台后端有导入接口）：
 
 ```bash
-curl -X POST "https://yai.example.com/api/v1/assets/import" \
+curl -X POST "https://GoHai.example.com/api/v1/assets/import" \
   -H "Authorization: Bearer <TOKEN>" \
   -d '{"type":"huggingface","repo":"ylecun/mnist","target_path":"/datasets/mnist"}'
 ```
@@ -777,7 +777,7 @@ build:
 deploy:
   stage: deploy
   script:
-    - helm upgrade --install yai-app ./charts/yai --namespace yai --set image.tag=$CI_COMMIT_SHORT_SHA
+    - helm upgrade --install GoHai-app ./charts/GoHai --namespace GoHai --set image.tag=$CI_COMMIT_SHORT_SHA
   only:
     - main
 
@@ -825,7 +825,7 @@ channel_priority: strict
 show_channel_urls: true
 ```
 
-## 14.2 yai train_job_template.yaml（完整版示例）
+## 14.2 GoHai train_job_template.yaml（完整版示例）
 
 ```yaml
 title: CLI-d2k3m7i1p6o4mutspnng
@@ -833,7 +833,7 @@ description: 生成自CLI模板
 image: harbor.example.com/ai/pytorch:1.13-cuda11
 command: python train.py --epochs 5 --batch_size 128
 env:
-    YAI_CLI: "true"
+    GoHai_CLI: "true"
 repository:
   - repository:
       space: space-abc123
@@ -853,7 +853,7 @@ spec:
 ## 14.3 sample Helm Chart 目录（建议）
 
 ```
-charts/yai/
+charts/GoHai/
   Chart.yaml
   values.yaml
   templates/
@@ -886,12 +886,12 @@ CMD ["bash","-lc","python train.py"]
 3. **部署 Harbor + MinIO + NFS（或 Rook-Ceph）**，确认镜像、对象存储可用。
 4. **部署 Keycloak 并连接 LDAP（测试登录）**。
 5. **部署 Volcano（调度器）** 与（若可）HAMi。
-6. **部署 YAI core helm chart（yai-api、yai-controller、devenv-controller、yai-ui）**。
+6. **部署 GoHai core helm chart（GoHai-api、GoHai-controller、devenv-controller、GoHai-ui）**。
 7. **构建并推送 mamba-base 与训练镜像到 Harbor**。
 8. **创建 workspace PVC 并在 UI 创建一个 DevEnv（选择 mamba-base、挂载 workspace）**，上传公钥，SSH 试连。
-9. **把 Fashion-MNIST repo `yai-example` push 到 GitLab（或 GitHub），在平台创建 dataset（或导入 HuggingFace）**。
+9. **把 Fashion-MNIST repo `GoHai-example` push 到 GitLab（或 GitHub），在平台创建 dataset（或导入 HuggingFace）**。
 10. **在 DevEnv 中 micromamba create 环境，安装依赖，测试 `nohup python train.py &`**。
-11. **编写 train_job_template.yaml，使用 yai CLI 或 UI 提交训练**，观察 Volcano 的调度、Pod 运行与输出保存到 `/output`。
+11. **编写 train_job_template.yaml，使用 GoHai CLI 或 UI 提交训练**，观察 Volcano 的调度、Pod 运行与输出保存到 `/output`。
 12. **将 `/output/*.pth` 导出到模型资产（MinIO），并在 UI 上保存为正式版本**。
 13. **接入 CI：在 repo 中添加 `.gitlab-ci.yml`，使推 main 自动构建镜像并触发 job**。
 14. **完善：添加 Prometheus/Grafana、Loki/Fluentbit、告警策略及审计日志。**
@@ -908,12 +908,12 @@ CMD ["bash","-lc","python train.py"]
 
 ---
 
-老大，这份操作方案把你给的所有零散信息（yai CLI 行为、context、repo init、trainjob template、dev env、micromamba、ssh/vscode、nohup、SFTP/lftp、模型导出、Volcano/HAMi/K8s/MinIO/Harbor/Keycloak/CI）全部串在一条可执行链路里：**你按步骤跑下去就能搭出一个能生产演示 Fashion-MNIST 的私有化 YAI 平台 DEMO**。
+老大，这份操作方案把你给的所有零散信息（GoHai CLI 行为、context、repo init、trainjob template、dev env、micromamba、ssh/vscode、nohup、SFTP/lftp、模型导出、Volcano/HAMi/K8s/MinIO/Harbor/Keycloak/CI）全部串在一条可执行链路里：**你按步骤跑下去就能搭出一个能生产演示 Fashion-MNIST 的私有化 GoHai 平台 DEMO**。
 
 如果你现在需要，我可以立刻（在本次回复里）：
 
-* 把 `charts/yai` 的 **最小 Helm Chart 模板** 生成出来（包含 values.yaml 和 templates），或者
-* 把 `yai-controller` / `devenv-controller` 的 **示例实现伪代码**（Go/Cobra + client-go）写出来，或
+* 把 `charts/GoHai` 的 **最小 Helm Chart 模板** 生成出来（包含 values.yaml 和 templates），或者
+* 把 `GoHai-controller` / `devenv-controller` 的 **示例实现伪代码**（Go/Cobra + client-go）写出来，或
 * 直接把 **完整 Fashion-MNIST repo（含 train.py、train_job_template.yaml、.gitlab-ci.yml）** 的文件树与内容生成，方便你 `git init` 即用。
 
 你说要哪个，我现在就把它生成出来（我不会问你问题，直接输出你选的那一份）。
